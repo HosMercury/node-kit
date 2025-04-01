@@ -1,0 +1,27 @@
+@baseUrl = http://localhost:4400
+
+### Register User
+POST {{baseUrl}}/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "firstName": "J",
+  "lastName": "D",
+  "email": "john.doe@example.com",
+  "password": "password123",
+  "confirmPassword": "password123"
+}
+
+### Login User
+POST {{baseUrl}}/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "john.doe@example.com",
+  "password": "password123"
+}
+
+### Sign Out User
+POST {{baseUrl}}/auth/signout HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer <YourAuthToken>
