@@ -2,9 +2,10 @@ import { Request, Response, NextFunction } from "express";
 
 const requireAuth = (req: Request, res: Response, next: NextFunction) => {
   if (!req.session || !req.session.user) {
-    return res.redirect("/auth/signin"); // Redirect to login if not authenticated
+    res.status(401).json({ error: "Unauthorized" });
+    return;
   }
-  next(); // Allow access if authenticated
+  next();
 };
 
 export default requireAuth;

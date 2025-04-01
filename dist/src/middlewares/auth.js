@@ -2,8 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const requireAuth = (req, res, next) => {
     if (!req.session || !req.session.user) {
-        return res.redirect("/auth/signin"); // Redirect to login if not authenticated
+        res.status(401).json({ error: "Unauthorized" });
+        return;
     }
-    next(); // Allow access if authenticated
+    next();
 };
 exports.default = requireAuth;

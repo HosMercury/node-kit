@@ -27,10 +27,14 @@ const signUpSchema = z
   .object({
     firstName: z
       .string()
-      .min(2, "First name must be at least 2 characters long"),
-    lastName: z.string().min(2, "Last name must be at least 2 characters long"),
+      .min(2, "First name must be at least 2 characters long")
+      .max(50, "First name must be at not 2 characters long"),
+    lastName: z
+      .string()
+      .min(2, "Last name must be at least 2 characters long")
+      .max(50, "Last name must be at not 2 characters long"),
     email: z.string().email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters long"),
+    password: z.string().min(8, "Password must be at least 8 characters long"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -61,7 +65,9 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     );
 
     if (existingUser.rows.length > 0) {
-      res.status(400).json([{ message: "Email is already in use" }]);
+      res
+        .status(400)
+        .json([{ field: email, error: "Email is already in use" }]);
       return;
     }
 
@@ -80,12 +86,10 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       createdAt: newUser.rows[0].created_at,
     };
 
-    res
-      .status(201)
-      .json({ message: "User created successfully", user: req.session.user });
+    res.status(201).json({ user: req.session.user });
     return;
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json([{ error: "Internal server error" }]);
     return;
   }
 });
@@ -112,14 +116,15 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     ]);
 
     if (result.rows.length === 0) {
-      res.status(401).json({ error: "Invalid credentials" });
+      res.status(401).json([{ error: "Invalid credentials" }]);
       return;
     }
 
     const user = result.rows[0];
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      res.status(401).json({ error: "Invalid credentials" });
+      res.status(401).json([{ error: "Invalid credentials" }]);
       return;
     }
 
@@ -143,12 +148,23 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 authRouter.post("/logout", requireAuth, (req: Request, res: Response) => {
   req.session.destroy((err) => {
     if (err) {
-      console.error("Error destroying session:", err);
-      return res.status(500).json({ error: "Failed to sign out" });
+      res.status(500).json({ error: "Failed to sign out" });
+      return;
     }
     res.status(200).json({ message: "Signed out successfully" });
     return;
   });
+});
+
+authRouter.get("/me", requireAuth, (req: Request, res: Response) => {
+  // Check if the user is in the session
+  if (!req.session.user) {
+    res.status(401).json({ error: "Not authenticated" });
+    return;
+  }
+
+  res.status(200).json({ user: req.session.user });
+  return;
 });
 
 export default authRouter;

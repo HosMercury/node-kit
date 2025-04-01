@@ -5,8 +5,8 @@ POST {{baseUrl}}/auth/register HTTP/1.1
 Content-Type: application/json
 
 {
-  "firstName": "J",
-  "lastName": "D",
+  "firstName": "John",
+  "lastName": "Doe",
   "email": "john.doe@example.com",
   "password": "password123",
   "confirmPassword": "password123"
@@ -21,7 +21,9 @@ Content-Type: application/json
   "password": "password123"
 }
 
+### Me
+GET {{baseUrl}}/auth/me HTTP/1.1
+
 ### Sign Out User
-POST {{baseUrl}}/auth/signout HTTP/1.1
-Content-Type: application/json
-Authorization: Bearer <YourAuthToken>
+POST {{baseUrl}}/auth/logout HTTP/1.1
+

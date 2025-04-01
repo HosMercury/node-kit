@@ -1,4 +1,4 @@
--- Add migration script here
+/* Replace with your SQL commands */
 CREATE TABLE IF NOT EXISTS users (
     first_name VARCHAR(50) NOT NULL,
     Last_name VARCHAR(50) NOT NULL,
