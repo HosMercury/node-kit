@@ -1,16 +1,26 @@
-import express, { Express, Request, Response } from "express";
+import express, { Express } from "express";
 import session from "express-session";
 import dotenv from "dotenv";
 import pgSession from "connect-pg-simple";
 import { pool } from "./src/pool";
 import requireAuth from "./src/middlewares/auth";
+import cors from "cors";
 import authRouter from "./src/routes/auth";
+import excelRouter from "./src/routes/excel";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 4400;
 
 const app: Express = express();
+
+const corsOptions = {
+  origin: "http://localhost:5173", // Replace "*" with a specific origin if needed
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allow only certain HTTP methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+  credentials: true, // Allow cookies to be sent with requests
+};
+app.use(cors(corsOptions));
 
 // Middleware: Body Parsing
 app.use(express.json()); // Parses JSON request bodies
@@ -54,11 +64,12 @@ async function checkDatabaseConnection() {
 }
 
 // Example Route: Render an EJS template
-app.get("/", requireAuth, (req: Request, res: Response) => {
+app.get("/", requireAuth, (_, res) => {
   res.json({ mesage: "home page" });
 });
 
 app.use("/auth", authRouter);
+app.use("/", excelRouter);
 
 // Start the server after checking the database connection
 checkDatabaseConnection().then(() => {

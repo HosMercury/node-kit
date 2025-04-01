@@ -1,10 +1,10 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import bcrypt from "bcrypt";
 import { pool } from "../pool";
 import { z } from "zod";
 import requireAuth from "../middlewares/auth";
 
-const authRouter = express.Router();
+const router = express.Router();
 
 declare module "express-session" {
   interface SessionData {
@@ -42,7 +42,7 @@ const signUpSchema = z
     path: ["confirmPassword"],
   });
 
-authRouter.post("/register", async (req: Request, res: Response) => {
+router.post("/register", async (req, res) => {
   const parseResult = signUpSchema.safeParse(req.body);
 
   if (!parseResult.success) {
@@ -67,14 +67,15 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     if (existingUser.rows.length > 0) {
       res
         .status(400)
-        .json([{ field: email, error: "Email is already in use" }]);
+        .json([{ field: "email", error: "Email is already in use" }]);
       return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const newUser = await pool.query(
-      "INSERT INTO users (first_name, last_name, email, password)  VALUES ($1, $2, $3, $4) RETURNING *",
+      `INSERT INTO users (first_name, last_name, email, password)  
+        VALUES ($1, $2, $3, $4) RETURNING *`,
       [firstName, lastName, email, hashedPassword]
     );
 
@@ -86,7 +87,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       createdAt: newUser.rows[0].created_at,
     };
 
-    res.status(201).json({ user: req.session.user });
+    res.status(201).json({ data: req.session.user });
     return;
   } catch (error) {
     res.status(500).json([{ error: "Internal server error" }]);
@@ -94,7 +95,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
   }
 });
 
-authRouter.post("/login", async (req: Request, res: Response) => {
+router.post("/login", async (req, res) => {
   const parseResult = signInSchema.safeParse(req.body);
 
   if (!parseResult.success) {
@@ -123,6 +124,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     const user = result.rows[0];
 
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       res.status(401).json([{ error: "Invalid credentials" }]);
       return;
@@ -136,35 +138,33 @@ authRouter.post("/login", async (req: Request, res: Response) => {
       createdAt: user.created_at,
     };
 
-    res
-      .status(200)
-      .json({ message: "Signed in successfully", user: req.session.user });
+    res.status(200).json({ data: req.session.user });
   } catch (error) {
     console.error("Error signing in:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-authRouter.post("/logout", requireAuth, (req: Request, res: Response) => {
+router.post("/logout", requireAuth, (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       res.status(500).json({ error: "Failed to sign out" });
       return;
     }
-    res.status(200).json({ message: "Signed out successfully" });
+    res.status(200);
     return;
   });
 });
 
-authRouter.get("/me", requireAuth, (req: Request, res: Response) => {
+router.get("/me", requireAuth, (req, res) => {
   // Check if the user is in the session
   if (!req.session.user) {
     res.status(401).json({ error: "Not authenticated" });
     return;
   }
 
-  res.status(200).json({ user: req.session.user });
+  res.status(200).json({ data: req.session.user });
   return;
 });
 
-export default authRouter;
+export default router;

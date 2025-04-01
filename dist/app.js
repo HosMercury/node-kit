@@ -18,10 +18,19 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const connect_pg_simple_1 = __importDefault(require("connect-pg-simple"));
 const pool_1 = require("./src/pool");
 const auth_1 = __importDefault(require("./src/middlewares/auth"));
+const cors_1 = __importDefault(require("cors"));
 const auth_2 = __importDefault(require("./src/routes/auth"));
+const excel_1 = __importDefault(require("./src/routes/excel"));
 dotenv_1.default.config();
 const PORT = process.env.PORT || 4400;
 const app = (0, express_1.default)();
+const corsOptions = {
+    origin: "http://localhost:5173", // Replace "*" with a specific origin if needed
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allow only certain HTTP methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+    credentials: true, // Allow cookies to be sent with requests
+};
+app.use((0, cors_1.default)(corsOptions));
 // Middleware: Body Parsing
 app.use(express_1.default.json()); // Parses JSON request bodies
 app.use(express_1.default.urlencoded({ extended: true })); // Parses URL-encoded request bodies
@@ -61,10 +70,11 @@ function checkDatabaseConnection() {
     });
 }
 // Example Route: Render an EJS template
-app.get("/", auth_1.default, (req, res) => {
+app.get("/", auth_1.default, (_, res) => {
     res.json({ mesage: "home page" });
 });
 app.use("/auth", auth_2.default);
+app.use("/", excel_1.default);
 // Start the server after checking the database connection
 checkDatabaseConnection().then(() => {
     app.listen(PORT, () => {

@@ -17,7 +17,7 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const pool_1 = require("../pool");
 const zod_1 = require("zod");
 const auth_1 = __importDefault(require("../middlewares/auth"));
-const authRouter = express_1.default.Router();
+const router = express_1.default.Router();
 const signInSchema = zod_1.z.object({
     email: zod_1.z.string().email("Invalid email"),
     password: zod_1.z.string().min(6, "Password must be at least 6 characters long"),
@@ -40,7 +40,7 @@ const signUpSchema = zod_1.z
     message: "Passwords do not match",
     path: ["confirmPassword"],
 });
-authRouter.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const parseResult = signUpSchema.safeParse(req.body);
     if (!parseResult.success) {
         // Map Zod error format to your desired error format
@@ -57,11 +57,12 @@ authRouter.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, fun
         if (existingUser.rows.length > 0) {
             res
                 .status(400)
-                .json([{ field: email, error: "Email is already in use" }]);
+                .json([{ field: "email", error: "Email is already in use" }]);
             return;
         }
         const hashedPassword = yield bcrypt_1.default.hash(password, 12);
-        const newUser = yield pool_1.pool.query("INSERT INTO users (first_name, last_name, email, password)  VALUES ($1, $2, $3, $4) RETURNING *", [firstName, lastName, email, hashedPassword]);
+        const newUser = yield pool_1.pool.query(`INSERT INTO users (first_name, last_name, email, password)  
+        VALUES ($1, $2, $3, $4) RETURNING *`, [firstName, lastName, email, hashedPassword]);
         req.session.user = {
             id: newUser.rows[0].id,
             firstName: newUser.rows[0].first_name,
@@ -69,7 +70,7 @@ authRouter.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, fun
             email: newUser.rows[0].email,
             createdAt: newUser.rows[0].created_at,
         };
-        res.status(201).json({ user: req.session.user });
+        res.status(201).json({ data: req.session.user });
         return;
     }
     catch (error) {
@@ -77,7 +78,7 @@ authRouter.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, fun
         return;
     }
 }));
-authRouter.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const parseResult = signInSchema.safeParse(req.body);
     if (!parseResult.success) {
         // Map Zod error format to your desired error format
@@ -110,32 +111,30 @@ authRouter.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, functi
             email: user.email,
             createdAt: user.created_at,
         };
-        res
-            .status(200)
-            .json({ message: "Signed in successfully", user: req.session.user });
+        res.status(200).json({ data: req.session.user });
     }
     catch (error) {
         console.error("Error signing in:", error);
         res.status(500).json({ error: "Internal server error" });
     }
 }));
-authRouter.post("/logout", auth_1.default, (req, res) => {
+router.post("/logout", auth_1.default, (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             res.status(500).json({ error: "Failed to sign out" });
             return;
         }
-        res.status(200).json({ message: "Signed out successfully" });
+        res.status(200);
         return;
     });
 });
-authRouter.get("/me", auth_1.default, (req, res) => {
+router.get("/me", auth_1.default, (req, res) => {
     // Check if the user is in the session
     if (!req.session.user) {
         res.status(401).json({ error: "Not authenticated" });
         return;
     }
-    res.status(200).json({ user: req.session.user });
+    res.status(200).json({ data: req.session.user });
     return;
 });
-exports.default = authRouter;
+exports.default = router;
