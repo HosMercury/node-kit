@@ -21,7 +21,7 @@ const upload = multer({ storage });
 
 router.post("/excel", upload.single("file"), async (req, res) => {
   if (!req.file) {
-    res.status(400).json({ error: "No file uploaded" });
+    res.status(400).json([{ error: "No file uploaded" }]);
     return;
   }
 
@@ -37,7 +37,7 @@ router.post("/excel", upload.single("file"), async (req, res) => {
     });
 
     if (rows.length < 2) {
-      res.status(400).json({ error: "Excel file is empty or has no data" });
+      res.status(400).json([{ error: "Excel file is empty or has no data" }]);
       return;
     }
 
@@ -46,17 +46,19 @@ router.post("/excel", upload.single("file"), async (req, res) => {
 
     // Map headers to column indices
     const columnMap: Record<string, number> = {
-      product_name: headers.indexOf("product name"),
-      quantity: headers.indexOf("quantity"),
-      condition: headers.indexOf("condition"),
-      final_condition: headers.indexOf("final condition"),
-      serial_tracking: headers.indexOf("serial tracking"),
-      mfg_serial: headers.indexOf("mfg serial"),
-      warranty: headers.indexOf("warranty"),
+      product_name: headers.indexOf("product name"), //0
+      quantity: headers.indexOf("quantity"), //1
+      condition: headers.indexOf("condition"), //2
+      final_condition: headers.indexOf("final condition"), //3
+      serial_tracking: headers.indexOf("serial tracking"), //4
+      mfg_serial: headers.indexOf("mfg serial"), //5
+      warranty: headers.indexOf("warranty"), //10
     };
 
     if (Object.values(columnMap).some((index) => index === -1)) {
-      res.status(400).json({ error: "Missing required columns in Excel file" });
+      res
+        .status(400)
+        .json([{ error: "Missing required columns in Excel file" }]);
       return;
     }
 
@@ -112,13 +114,11 @@ router.post("/excel", upload.single("file"), async (req, res) => {
     });
 
     res.status(201).json({
-      message: "Data inserted successfully",
-      inserted: result.rowCount,
+      data: result.rowCount,
     });
     return;
   } catch (error) {
-    console.error("Error processing Excel file:", error);
-    res.status(500).json({ error: "Failed to process the Excel file" });
+    res.status(500).json([{ error: "Failed to process the Excel file" }]);
     return;
   }
 });

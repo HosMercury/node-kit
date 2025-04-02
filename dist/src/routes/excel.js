@@ -31,7 +31,7 @@ const storage = multer_1.default.diskStorage({
 const upload = (0, multer_1.default)({ storage });
 router.post("/excel", upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
-        res.status(400).json({ error: "No file uploaded" });
+        res.status(400).json([{ error: "No file uploaded" }]);
         return;
     }
     try {
@@ -44,23 +44,25 @@ router.post("/excel", upload.single("file"), (req, res) => __awaiter(void 0, voi
             defval: null,
         });
         if (rows.length < 2) {
-            res.status(400).json({ error: "Excel file is empty or has no data" });
+            res.status(400).json([{ error: "Excel file is empty or has no data" }]);
             return;
         }
         // Extract headers
         const headers = rows[0].map((h) => h === null || h === void 0 ? void 0 : h.toLowerCase().trim());
         // Map headers to column indices
         const columnMap = {
-            product_name: headers.indexOf("product name"),
-            quantity: headers.indexOf("quantity"),
-            condition: headers.indexOf("condition"),
-            final_condition: headers.indexOf("final condition"),
-            serial_tracking: headers.indexOf("serial tracking"),
-            mfg_serial: headers.indexOf("mfg serial"),
-            warranty: headers.indexOf("warranty"),
+            product_name: headers.indexOf("product name"), //0
+            quantity: headers.indexOf("quantity"), //1
+            condition: headers.indexOf("condition"), //2
+            final_condition: headers.indexOf("final condition"), //3
+            serial_tracking: headers.indexOf("serial tracking"), //4
+            mfg_serial: headers.indexOf("mfg serial"), //5
+            warranty: headers.indexOf("warranty"), //10
         };
         if (Object.values(columnMap).some((index) => index === -1)) {
-            res.status(400).json({ error: "Missing required columns in Excel file" });
+            res
+                .status(400)
+                .json([{ error: "Missing required columns in Excel file" }]);
             return;
         }
         // Extract and transform data
@@ -108,14 +110,12 @@ router.post("/excel", upload.single("file"), (req, res) => __awaiter(void 0, voi
                 console.error("Failed to delete file:", err);
         });
         res.status(201).json({
-            message: "Data inserted successfully",
-            inserted: result.rowCount,
+            data: result.rowCount,
         });
         return;
     }
     catch (error) {
-        console.error("Error processing Excel file:", error);
-        res.status(500).json({ error: "Failed to process the Excel file" });
+        res.status(500).json([{ error: "Failed to process the Excel file" }]);
         return;
     }
 }));
