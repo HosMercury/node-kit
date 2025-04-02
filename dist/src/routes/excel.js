@@ -31,7 +31,7 @@ const storage = multer_1.default.diskStorage({
 const upload = (0, multer_1.default)({ storage });
 router.post("/excel", upload.single("file"), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.file) {
-        res.status(400).json({ error: "No file uploaded" });
+        res.status(400).json([{ error: "No file uploaded" }]);
         return;
     }
     try {
@@ -45,7 +45,7 @@ router.post("/excel", upload.single("file"), (req, res) => __awaiter(void 0, voi
             defval: null, // Sets empty cells to `null`
         });
         if (rows.length < 2) {
-            res.status(400).json({ error: "Excel file is empty or has no data" });
+            res.status(400).json([{ error: "Excel file is empty or has no data" }]);
             return;
         }
         // Extract headers from the first row
@@ -62,7 +62,9 @@ router.post("/excel", upload.single("file"), (req, res) => __awaiter(void 0, voi
         };
         // Ensure all required columns exist
         if (Object.values(columnMap).some((index) => index === -1)) {
-            res.status(400).json({ error: "Missing required columns in Excel file" });
+            res
+                .status(400)
+                .json([{ error: "Missing required columns in Excel file" }]);
             return;
         }
         // Extract data rows (skip header row)

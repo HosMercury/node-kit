@@ -21,7 +21,7 @@ const upload = multer({ storage });
 
 router.post("/excel", upload.single("file"), async (req, res) => {
   if (!req.file) {
-    res.status(400).json({ error: "No file uploaded" });
+    res.status(400).json([{ error: "No file uploaded" }]);
     return;
   }
 
@@ -38,7 +38,7 @@ router.post("/excel", upload.single("file"), async (req, res) => {
     });
 
     if (rows.length < 2) {
-      res.status(400).json({ error: "Excel file is empty or has no data" });
+      res.status(400).json([{ error: "Excel file is empty or has no data" }]);
       return;
     }
 
@@ -58,7 +58,9 @@ router.post("/excel", upload.single("file"), async (req, res) => {
 
     // Ensure all required columns exist
     if (Object.values(columnMap).some((index) => index === -1)) {
-      res.status(400).json({ error: "Missing required columns in Excel file" });
+      res
+        .status(400)
+        .json([{ error: "Missing required columns in Excel file" }]);
       return;
     }
 
